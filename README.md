@@ -16,3 +16,7 @@ Requires .NET 10 SDK and Windows for GUI. Run:
 ## Output destination
 
 By default, the app saves `nipkg.ini` beside `_Src`. You can select another destination using the output **Browse...** button, edit the output path directly, or click **Auto** to restore automatic detection.
+
+## Automatic feeds discovery
+
+You can select the LabVIEW installation root, its `_Src` folder, or its `_Src/feeds` folder. The application resolves the actual feeds directory and writes `nipkg.ini` to the installation root by default. A missing `_Src/feeds` directory is reported as an error, rather than producing an empty file.
