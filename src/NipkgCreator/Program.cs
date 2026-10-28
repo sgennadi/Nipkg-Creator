@@ -19,41 +19,39 @@ internal static class RepositoryGenerator
     public static (string FeedsPath, string OutputPath) Resolve(string selectedPath)
     {
         if (string.IsNullOrWhiteSpace(selectedPath))
-            throw new ArgumentException("Select a LabVIEW folder, _Src, or feeds.");
+            throw new ArgumentException("Select a package root, _Src, or feeds folder.");
+
         var selected = new DirectoryInfo(Path.GetFullPath(selectedPath.Trim().Trim('"')));
         if (!selected.Exists)
             throw new DirectoryNotFoundException("Selected folder does not exist or is inaccessible: " + selected.FullName);
 
-        // Accept the feeds folder directly, its _Src parent, a LabVIEW root,
-        // or a folder under the installation tree.
-        for (DirectoryInfo? current = selected, last = null; current != null; last = current, current = current.Parent)
+        DirectoryInfo root;
+        string feeds;
+
+        if (selected.Name.Equals("feeds", StringComparison.OrdinalIgnoreCase))
         {
-            if (current.Name.Equals("feeds", StringComparison.OrdinalIgnoreCase))
-            {
-                var parent = current.Parent ?? throw new IOException("Cannot determine installation folder.");
-                var root = parent.Name.Equals("_Src", StringComparison.OrdinalIgnoreCase)
-                    ? parent.Parent ?? throw new IOException("Cannot determine installation folder.")
-                    : parent;
-                return (current.FullName, Path.Combine(root.FullName, "nipkg.ini"));
-            }
-
-            var candidate = Path.Combine(current.FullName, "_Src", "feeds");
-            if (Directory.Exists(candidate))
-                return (candidate, Path.Combine(current.FullName, "nipkg.ini"));
-
-            if (current.Name.Equals("_Src", StringComparison.OrdinalIgnoreCase))
-            {
-                candidate = Path.Combine(current.FullName, "feeds");
-                if (Directory.Exists(candidate))
-                    return (candidate, Path.Combine(current.Parent!.FullName, "nipkg.ini"));
-            }
-
-            // Do not fall out of the chosen installation into arbitrary higher-level shares.
-            if (current.Name.Equals("_Src", StringComparison.OrdinalIgnoreCase) ||
-                current.Name.StartsWith("LabVIEW", StringComparison.OrdinalIgnoreCase))
-                break;
+            var parent = selected.Parent ?? throw new IOException("Cannot determine package root.");
+            root = parent.Name.Equals("_Src", StringComparison.OrdinalIgnoreCase)
+                ? parent.Parent ?? throw new IOException("Cannot determine package root.")
+                : parent;
+            feeds = selected.FullName;
         }
-        throw new DirectoryNotFoundException("Cannot find _Src\\feeds in or above the selected folder. Verify the LabVIEW directory structure.");
+        else if (selected.Name.Equals("_Src", StringComparison.OrdinalIgnoreCase))
+        {
+            root = selected.Parent ?? throw new IOException("Cannot determine package root.");
+            feeds = Path.Combine(selected.FullName, "feeds");
+        }
+        else
+        {
+            root = selected;
+            feeds = Path.Combine(selected.FullName, "_Src", "feeds");
+        }
+
+        if (!Directory.Exists(feeds))
+            throw new DirectoryNotFoundException("Feeds folder not found: " + feeds +
+                ". Select a package root containing _Src\\feeds, _Src, or feeds.");
+
+        return (feeds, Path.Combine(root.FullName, "nipkg.ini"));
     }
 
     public static string GetOutputPath(string selectedPath) => Resolve(selectedPath).OutputPath;
@@ -119,7 +117,7 @@ internal sealed class MainForm : Form
         main.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
         Controls.Add(main);
         main.Controls.Add(new Label { Text = "NI Package Repository Creator", Font = new Font("Segoe UI Semibold", 19), Dock = DockStyle.Fill }, 0, 0);
-        main.Controls.Add(new Label { Text = "LabVIEW folder / _Src / feeds", Dock = DockStyle.Fill }, 0, 1);
+        main.Controls.Add(new Label { Text = "Package root / _Src / feeds", Dock = DockStyle.Fill }, 0, 1);
         var feedRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Margin = Padding.Empty, Padding = Padding.Empty };
         feedRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         feedRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 128));
@@ -177,7 +175,7 @@ internal sealed class MainForm : Form
 
     private void Browse()
     {
-        using var picker = new FolderBrowserDialog { Description = "Select LabVIEW root, _Src or feeds folder", UseDescriptionForTitle = true };
+        using var picker = new FolderBrowserDialog { Description = "Select package root, _Src or feeds folder", UseDescriptionForTitle = true };
         if (Directory.Exists(feeds.Text)) picker.SelectedPath = feeds.Text;
         if (picker.ShowDialog(this) == DialogResult.OK) feeds.Text = picker.SelectedPath;
     }
