@@ -480,8 +480,17 @@ internal sealed class MainForm : Form
         grid.RowStyles.Add(new RowStyle(SizeType.Absolute,29));
         grid.RowStyles.Add(new RowStyle(SizeType.Percent,100));
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,155));
-        if (isOutput) grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,105));
+        // Allocate real space for the button text, icon and margins. Never let
+        // a minimum-sized button protrude beyond its TableLayoutPanel cell.
+        using var actionFont = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
+        int BrowseCellWidth = Math.Max(172,
+            TextRenderer.MeasureText("Browse...", actionFont, new Size(int.MaxValue, 50),
+                TextFormatFlags.SingleLine).Width + 86);
+        int AutoCellWidth = Math.Max(124,
+            TextRenderer.MeasureText("Auto", actionFont, new Size(int.MaxValue, 50),
+                TextFormatFlags.SingleLine).Width + 75);
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, BrowseCellWidth));
+        if (isOutput) grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, AutoCellWidth));
         var label = new Label { Dock=DockStyle.Fill, Text=title,
             Font=new Font("Segoe UI Semibold",10,FontStyle.Bold), ForeColor=Palette.Ink,
             TextAlign=ContentAlignment.MiddleLeft, AutoEllipsis=true };
@@ -494,16 +503,16 @@ internal sealed class MainForm : Form
         field.ForeColor = Palette.Ink;
         field.Font = new Font("Segoe UI", 10);
         grid.Controls.Add(field,0,1);
-        var browse = NewButton("Browse...", ButtonGlyph.Folder,false,Palette.Blue,138);
+        var browse = NewButton("Browse...", ButtonGlyph.Folder,false,Palette.Blue,BrowseCellWidth - 14);
         browse.Dock = DockStyle.Fill;
-        browse.Margin = new Padding(0,0,isOutput ? 9 : 0,1);
+        browse.Margin = new Padding(0,0,isOutput ? 12 : 2,1);
         browse.Click += (_, _) => { if (isOutput) BrowseOutput(); else BrowseSource(); };
         grid.Controls.Add(browse,1,1);
         if (isOutput)
         {
-            var automatic = NewButton("Auto",ButtonGlyph.Refresh,false,Palette.Blue,100);
+            var automatic = NewButton("Auto",ButtonGlyph.Refresh,false,Palette.Blue,AutoCellWidth - 4);
             automatic.Dock = DockStyle.Fill;
-            automatic.Margin = new Padding(0,0,0,1);
+            automatic.Margin = new Padding(0,0,2,1);
             automatic.Click += (_, _) => { customOutput = false; ResolvePath(); };
             grid.Controls.Add(automatic,2,1);
         }
