@@ -1,0 +1,38 @@
+name: Publish v1.0.0 Release
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release.yml'
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build portable EXE
+        shell: pwsh
+        run: |
+          dotnet publish src/NipkgCreator/NipkgCreator.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -o publish
+          if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
+          if (!(Test-Path 'publish/NipkgCreator.exe')) { throw "EXE missing" }
+          $exe = Get-Item 'publish/NipkgCreator.exe'
+          if ($exe.Length -lt 1000000) { throw "Unexpectedly small EXE" }
+          Get-FileHash 'publish/NipkgCreator.exe' -Algorithm SHA256 | Format-List
+      - name: Release EXE and source
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = 'v1.0.0'
+          gh release view $tag --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release $tag already exists; refusing to overwrite it"
+          }
+          gh release create $tag 'publish/NipkgCreator.exe' --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Nipkg Creator v1.0.0" --notes "Initial Windows x64 release. Standalone .NET 10 WinForms utility. Select feeds, preview generated configuration and save nipkg.ini in the package root." --latest
+          if ($LASTEXITCODE -ne 0) { throw "Release publication failed" }
