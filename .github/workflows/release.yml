@@ -1,11 +1,12 @@
-name: Build and publish v1.0.1
+name: Build and publish v1.1.0
 on:
-  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - '.github/workflows/release.yml'
       - 'src/**'
+      - 'tools/GenerateAppIcon.ps1'
+  workflow_dispatch:
 jobs:
   release:
     runs-on: windows-latest
@@ -16,24 +17,39 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Build portable EXE
+      - name: Generate branded Windows icon
+        shell: pwsh
+        run: |
+          ./tools/GenerateAppIcon.ps1
+          if (!(Test-Path 'src/NipkgCreator/Assets/NipkgCreator.ico')) { throw "App icon missing" }
+      - name: Publish Windows x64 single-file EXE
         shell: pwsh
         run: |
           dotnet publish src/NipkgCreator/NipkgCreator.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -o publish
-          if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
+          if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
           if (!(Test-Path 'publish/NipkgCreator.exe')) { throw "EXE missing" }
           $exe = Get-Item 'publish/NipkgCreator.exe'
           if ($exe.Length -lt 1000000) { throw "Unexpectedly small EXE" }
+          Add-Type -AssemblyName System.Drawing
+          $icon = [System.Drawing.Icon]::ExtractAssociatedIcon($exe.FullName)
+          if ($null -eq $icon) { throw "Embedded icon missing" }
+          $icon.Dispose()
           Get-FileHash 'publish/NipkgCreator.exe' -Algorithm SHA256 | Format-List
-      - name: Release EXE and source
+      - name: Upload CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NipkgCreator-v1.1.0-win-x64
+          path: publish/NipkgCreator.exe
+          if-no-files-found: error
+      - name: Publish stable v1.1.0 release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = 'v1.0.1'
+          $tag = 'v1.1.0'
           gh release view $tag --repo "${{ github.repository }}" *> $null
           if ($LASTEXITCODE -eq 0) {
             throw "Release $tag already exists; refusing to overwrite it"
           }
-          gh release create $tag 'publish/NipkgCreator.exe' --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Nipkg Creator v1.0.1" --notes "Windows x64 standalone GUI. Select any package root, _Src, or feeds; choose output folder; preview and generate nipkg.ini. Includes DPI layout fixes." --latest
+          gh release create $tag 'publish/NipkgCreator.exe' --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Nipkg Creator v1.1.0" --notes "New colorful WinForms interface, blue-and-green NI gear icon embedded in EXE, modern buttons, syntax highlighting, responsive paths and previews. Self-contained Windows x64." --latest
           if ($LASTEXITCODE -ne 0) { throw "Release publication failed" }
