@@ -372,7 +372,7 @@ internal sealed class MainForm : Form
         var previewRow = new TableLayoutPanel { Dock=DockStyle.Fill, BackColor=Palette.SoftBlue,
             ColumnCount=2, RowCount=1, Margin=Padding.Empty };
         previewRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-        previewRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,105));
+        previewRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,148));
         previewLabel.Dock = DockStyle.Fill;
         previewLabel.Text = "Configuration preview  ·  nipkg.ini";
         previewLabel.Font = new Font("Segoe UI Semibold", 10.5f, FontStyle.Bold);
@@ -380,7 +380,8 @@ internal sealed class MainForm : Form
         previewLabel.Padding = new Padding(0, 1, 0, 2);
         previewLabel.ForeColor = Palette.Navy;
         copyButton.Dock = DockStyle.Fill;
-        copyButton.Margin = Padding.Empty;
+        copyButton.MinimumSize = new Size(132, 34);
+        copyButton.Margin = new Padding(0, 1, 2, 1);
         copyButton.Enabled = false;
         copyButton.Click += (_, _) => CopyPreview();
         previewRow.Controls.Add(previewLabel,0,0);
@@ -479,8 +480,8 @@ internal sealed class MainForm : Form
         grid.RowStyles.Add(new RowStyle(SizeType.Absolute,29));
         grid.RowStyles.Add(new RowStyle(SizeType.Percent,100));
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,126));
-        if (isOutput) grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,99));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,155));
+        if (isOutput) grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,105));
         var label = new Label { Dock=DockStyle.Fill, Text=title,
             Font=new Font("Segoe UI Semibold",10,FontStyle.Bold), ForeColor=Palette.Ink,
             TextAlign=ContentAlignment.MiddleLeft, AutoEllipsis=true };
@@ -493,14 +494,14 @@ internal sealed class MainForm : Form
         field.ForeColor = Palette.Ink;
         field.Font = new Font("Segoe UI", 10);
         grid.Controls.Add(field,0,1);
-        var browse = NewButton("Browse...", ButtonGlyph.Folder,false,Palette.Blue,120);
+        var browse = NewButton("Browse...", ButtonGlyph.Folder,false,Palette.Blue,138);
         browse.Dock = DockStyle.Fill;
         browse.Margin = new Padding(0,0,isOutput ? 9 : 0,1);
         browse.Click += (_, _) => { if (isOutput) BrowseOutput(); else BrowseSource(); };
         grid.Controls.Add(browse,1,1);
         if (isOutput)
         {
-            var automatic = NewButton("Auto",ButtonGlyph.Refresh,false,Palette.Blue,90);
+            var automatic = NewButton("Auto",ButtonGlyph.Refresh,false,Palette.Blue,100);
             automatic.Dock = DockStyle.Fill;
             automatic.Margin = new Padding(0,0,0,1);
             automatic.Click += (_, _) => { customOutput = false; ResolvePath(); };
