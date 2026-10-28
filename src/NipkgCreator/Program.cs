@@ -321,7 +321,7 @@ internal sealed class MainForm : Form
         Size = new Size(1050, 745);
         BackColor = Palette.Canvas;
         ForeColor = Palette.Ink;
-        try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application; }
+        try { Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application; }
         catch { Icon = SystemIcons.Application; }
         Bitmap? logo = null;
         try { logo = Icon.ToBitmap(); } catch { /* native icon fallback */ }
