@@ -64,7 +64,8 @@ internal static class RepositoryGenerator
 internal sealed class MainForm : Form
 {
     private readonly TextBox feeds = new() { Dock = DockStyle.Fill };
-    private readonly TextBox output = new() { Dock = DockStyle.Fill, ReadOnly = true };
+    private readonly TextBox output = new() { Dock = DockStyle.Fill, ReadOnly = false, Margin = new Padding(0, 4, 12, 4) };
+    private bool customOutput;
     private readonly TextBox preview = new() { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, WordWrap = false, Font = new Font("Consolas", 10) };
     private readonly Label status = new() { Dock = DockStyle.Fill, ForeColor = Color.DimGray, Text = "Ready" };
 
@@ -72,11 +73,12 @@ internal sealed class MainForm : Form
     {
         Text = "Nipkg Creator | NI Repository Configuration";
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(750, 520);
+        AutoScaleMode = AutoScaleMode.Dpi;
+        MinimumSize = new Size(820, 550);
         Size = new Size(940, 670);
         Font = new Font("Segoe UI", 10);
         BackColor = Color.FromArgb(246, 248, 251);
-        var main = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 8 };
+        var main = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(24, 20, 24, 18), ColumnCount = 1, RowCount = 8 };
         main.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
         main.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         main.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
@@ -88,17 +90,29 @@ internal sealed class MainForm : Form
         Controls.Add(main);
         main.Controls.Add(new Label { Text = "NI Package Repository Creator", Font = new Font("Segoe UI Semibold", 19), Dock = DockStyle.Fill }, 0, 0);
         main.Controls.Add(new Label { Text = "Feeds directory", Dock = DockStyle.Fill }, 0, 1);
-        var feedRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
+        var feedRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Margin = Padding.Empty, Padding = Padding.Empty };
         feedRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        feedRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        feedRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 128));
+        feeds.Margin = new Padding(0, 4, 12, 4);
         feedRow.Controls.Add(feeds, 0, 0);
         var browse = MakeButton("Browse...", false);
         browse.Click += (_, _) => Browse();
         feedRow.Controls.Add(browse, 1, 0);
         main.Controls.Add(feedRow, 0, 2);
-        main.Controls.Add(new Label { Text = "Output file (automatically detected)", Dock = DockStyle.Fill }, 0, 3);
-        main.Controls.Add(output, 0, 4);
-        var actions = new FlowLayoutPanel { Dock = DockStyle.Fill };
+        main.Controls.Add(new Label { Text = "Output file (editable, or select destination)", Dock = DockStyle.Fill }, 0, 3);
+        var outputRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, Margin = Padding.Empty, Padding = Padding.Empty };
+        outputRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        outputRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 128));
+        outputRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96));
+        outputRow.Controls.Add(output, 0, 0);
+        var selectFolder = MakeButton("Browse...", false);
+        selectFolder.Click += (_, _) => BrowseOutputFolder();
+        outputRow.Controls.Add(selectFolder, 1, 0);
+        var automatic = MakeButton("Auto", false);
+        automatic.Click += (_, _) => { customOutput = false; UpdateOutput(); };
+        outputRow.Controls.Add(automatic, 2, 0);
+        main.Controls.Add(outputRow, 0, 4);
+        var actions = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, AutoScroll = true, Margin = new Padding(0, 5, 0, 0) };
         var inspect = MakeButton("Preview", false);
         inspect.Click += (_, _) => Preview();
         var save = MakeButton("Create nipkg.ini", true);
@@ -110,19 +124,25 @@ internal sealed class MainForm : Form
         main.Controls.Add(preview, 0, 6);
         main.Controls.Add(status, 0, 7);
         feeds.TextChanged += (_, _) => UpdateOutput();
+        output.TextChanged += (_, _) => { if (output.Focused) customOutput = true; };
         UpdateOutput();
     }
 
     private static Button MakeButton(string text, bool accent) =>
-        new() { Text = text, AutoSize = true, MinimumSize = new Size(112, 35), Height = 35,
+        new() { Text = text, AutoSize = false, Width = text == "Create nipkg.ini" ? 162 : text == "Open output folder" ? 182 : text == "Auto" ? 82 : text == "Preview" ? 114 : 112, Height = 34, Anchor = AnchorStyles.Left | AnchorStyles.Right,
             BackColor = accent ? Color.FromArgb(29, 100, 190) : Color.White,
-            ForeColor = accent ? Color.White : Color.Black, FlatStyle = FlatStyle.Flat, Margin = new Padding(0, 0, 10, 0) };
+            ForeColor = accent ? Color.White : Color.FromArgb(35, 45, 60), FlatStyle = FlatStyle.Flat, Margin = new Padding(0, 3, 8, 3), Padding = new Padding(6, 0, 6, 0), UseVisualStyleBackColor = false };
 
     private void UpdateOutput()
     {
         preview.Clear();
-        try { output.Text = RepositoryGenerator.GetOutputPath(feeds.Text); status.Text = "Ready"; }
-        catch (Exception ex) { output.Clear(); status.Text = ex.Message; }
+        try
+        {
+            var autoPath = RepositoryGenerator.GetOutputPath(feeds.Text);
+            if (!customOutput) output.Text = autoPath;
+            status.Text = customOutput ? "Custom output location" : "Automatic output location";
+        }
+        catch (Exception ex) { if (!customOutput) output.Clear(); status.Text = ex.Message; }
     }
 
     private void Browse()
@@ -130,6 +150,19 @@ internal sealed class MainForm : Form
         using var picker = new FolderBrowserDialog { Description = "Select NI feeds folder", UseDescriptionForTitle = true };
         if (Directory.Exists(feeds.Text)) picker.SelectedPath = feeds.Text;
         if (picker.ShowDialog(this) == DialogResult.OK) feeds.Text = picker.SelectedPath;
+    }
+
+    private void BrowseOutputFolder()
+    {
+        using var picker = new FolderBrowserDialog { Description = "Select folder for nipkg.ini", UseDescriptionForTitle = true };
+        var current = Path.GetDirectoryName(output.Text);
+        if (!string.IsNullOrWhiteSpace(current) && Directory.Exists(current)) picker.SelectedPath = current;
+        if (picker.ShowDialog(this) == DialogResult.OK)
+        {
+            customOutput = true;
+            output.Text = Path.Combine(picker.SelectedPath, "nipkg.ini");
+            status.Text = "Custom output location";
+        }
     }
 
     private (string Content, int Count)? Preview()
@@ -155,7 +188,12 @@ internal sealed class MainForm : Form
     {
         var result = Preview();
         if (result is null) return;
-        var path = output.Text;
+        var path = output.Text.Trim();
+        if (string.IsNullOrWhiteSpace(path) || !Path.GetFileName(path).Equals("nipkg.ini", StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show(this, "Output filename must be nipkg.ini.", "Invalid output path", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
         if (File.Exists(path) && MessageBox.Show(this, $"Replace existing file?\n\n{path}", "Confirm overwrite", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
         try
         {
