@@ -49,7 +49,8 @@ jobs:
           $tag = 'v1.1.3'
           gh release view $tag --repo "${{ github.repository }}" *> $null
           if ($LASTEXITCODE -eq 0) {
-            throw "Release $tag already exists; refusing to overwrite it"
+            Write-Host "::notice::Release $tag already exists; keeping published assets unchanged."
+            exit 0
           }
           gh release create $tag 'publish/NipkgCreator.exe' --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Nipkg Creator v1.1.3" --notes "Fix Browse and Auto clipping by sizing their layout columns from text measurements and margins. Windows x64 standalone." --latest
           if ($LASTEXITCODE -ne 0) { throw "Release publication failed" }
