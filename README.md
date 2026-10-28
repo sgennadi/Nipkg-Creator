@@ -12,3 +12,7 @@ Open **Actions** -> **Build Windows EXE** -> latest successful run -> **Artifact
 ## Build locally
 Requires .NET 10 SDK and Windows for GUI. Run:
 `dotnet publish src/NipkgCreator/NipkgCreator.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:DebugType=None -o publish`
+
+## Output destination
+
+By default, the app saves `nipkg.ini` beside `_Src`. You can select another destination using the output **Browse...** button, edit the output path directly, or click **Auto** to restore automatic detection.
