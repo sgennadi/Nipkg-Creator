@@ -6,6 +6,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>NipkgCreator</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
+    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <ApplicationIcon>Assets\NipkgCreator.ico</ApplicationIcon>
+    <Description>NI Package Manager repository configuration creator</Description>
   </PropertyGroup>
+  <Target Name="GenerateApplicationIcon" BeforeTargets="PrepareForBuild"
+          Condition="'$(OS)' == 'Windows_NT' and !Exists('$(MSBuildProjectDirectory)\Assets\NipkgCreator.ico')">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\tools\GenerateAppIcon.ps1&quot;" />
+  </Target>
 </Project>
