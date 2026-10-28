@@ -179,9 +179,9 @@ internal sealed class ModernButton : Control
         var foreground = !Enabled ? Palette.Secondary : Filled ? Color.White :
                          Accent == Palette.Green ? Palette.GreenDark : Palette.BlueDark;
         DrawGlyph(g, new Rectangle(14, (Height - 19) / 2, 19, 19), foreground);
-        TextRenderer.DrawText(g, Text, Font, new Rectangle(40, 0, Math.Max(0, Width - 45), Height),
+        TextRenderer.DrawText(g, Text, Font, new Rectangle(40, 3, Math.Max(0, Width - 52), Math.Max(1, Height - 6)),
             foreground, TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis |
-            TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+            TextFormatFlags.SingleLine);
         if (Focused)
         {
             using var focus = new Pen(Filled ? Color.White : Palette.Blue, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot };
@@ -285,13 +285,13 @@ internal sealed class GradientHeader : Panel
         }
         g.Restore(state);
         if (logo != null) g.DrawImage(logo, new Rectangle(20, 22, 70, 70));
-        using var titleFont = new Font("Segoe UI", 19f, FontStyle.Bold);
+        using var titleFont = new Font("Segoe UI", 18f, FontStyle.Bold);
         using var subFont = new Font("Segoe UI", 10.5f, FontStyle.Regular);
         TextRenderer.DrawText(g, "NI Package Repository Creator", titleFont,
-            new Rectangle(107, 20, Math.Max(20, Width-125), 43), Color.White,
-            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            new Rectangle(107, 8, Math.Max(20, Width-125), 65), Color.White,
+            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
         TextRenderer.DrawText(g, "Create nipkg.ini from NI package feeds in seconds", subFont,
-            new Rectangle(109, 66, Math.Max(20, Width-127), 30), Color.FromArgb(221,239,255),
+            new Rectangle(109, 69, Math.Max(20, Width-127), 38), Color.FromArgb(221,239,255),
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
     }
 }
@@ -317,8 +317,8 @@ internal sealed class MainForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 10);
         AutoScaleMode = AutoScaleMode.Font;
-        MinimumSize = new Size(860, 670);
-        Size = new Size(1050, 745);
+        MinimumSize = new Size(1000, 670);
+        Size = new Size(1120, 760);
         BackColor = Palette.Canvas;
         ForeColor = Palette.Ink;
         try { Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application; }
@@ -333,11 +333,11 @@ internal sealed class MainForm : Form
             Margin = Padding.Empty, BackColor = Palette.Canvas
         };
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        body.RowStyles.Add(new RowStyle(SizeType.Absolute, 126));
+        body.RowStyles.Add(new RowStyle(SizeType.Absolute, 137));
         body.RowStyles.Add(new RowStyle(SizeType.Absolute, 99));
         body.RowStyles.Add(new RowStyle(SizeType.Absolute, 99));
-        body.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
-        body.RowStyles.Add(new RowStyle(SizeType.Absolute, 49));
+        body.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
+        body.RowStyles.Add(new RowStyle(SizeType.Absolute, 55));
         body.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         body.RowStyles.Add(new RowStyle(SizeType.Absolute, 61));
         Controls.Add(body);
@@ -354,9 +354,9 @@ internal sealed class MainForm : Form
             WrapContents = false, AutoScroll = true, BackColor = Palette.Canvas,
             Margin = new Padding(0,8,0,6)
         };
-        var inspect = NewButton("Preview", ButtonGlyph.Eye, false, Palette.Blue, 142);
-        var create = NewButton("Create nipkg.ini", ButtonGlyph.Create, true, Palette.Green, 198);
-        var open = NewButton("Open output folder", ButtonGlyph.Open, true, Palette.Blue, 214);
+        var inspect = NewButton("Preview", ButtonGlyph.Eye, false, Palette.Blue, 154);
+        var create = NewButton("Create nipkg.ini", ButtonGlyph.Create, true, Palette.Green, 224);
+        var open = NewButton("Open output folder", ButtonGlyph.Open, true, Palette.Blue, 260);
         inspect.Click += (_, _) => GeneratePreview();
         create.Click += (_, _) => Save();
         open.Click += (_, _) => OpenFolder();
@@ -377,6 +377,7 @@ internal sealed class MainForm : Form
         previewLabel.Text = "Configuration preview  ·  nipkg.ini";
         previewLabel.Font = new Font("Segoe UI Semibold", 10.5f, FontStyle.Bold);
         previewLabel.TextAlign = ContentAlignment.MiddleLeft;
+        previewLabel.Padding = new Padding(0, 1, 0, 2);
         previewLabel.ForeColor = Palette.Navy;
         copyButton.Dock = DockStyle.Fill;
         copyButton.Margin = Padding.Empty;
@@ -455,7 +456,19 @@ internal sealed class MainForm : Form
         ForeColor=Palette.Ink, Font=new Font("Segoe UI",10)
     };
     private static ModernButton NewButton(string text, ButtonGlyph glyph, bool filled, Color accent, int width)
-        => new(text, glyph, filled, accent) { Width=width, Height=42, Margin=new Padding(0,0,12,0) };
+        {
+        var font = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
+        var measured = TextRenderer.MeasureText(text, font, new Size(int.MaxValue, 100),
+            TextFormatFlags.SingleLine);
+        font.Dispose();
+        return new ModernButton(text, glyph, filled, accent)
+        {
+            Width = Math.Max(width, measured.Width + 72),
+            MinimumSize = new Size(Math.Max(width, measured.Width + 72), 40),
+            Height = 42,
+            Margin = new Padding(0,0,12,0)
+        };
+    }
 
     private SurfaceCard MakePathCard(string title, TextBox field, bool isOutput)
     {
