@@ -269,7 +269,7 @@ internal sealed class GradientHeader : Panel
         {
             wave.AddBezier(new PointF(Width - 340, Height), new PointF(Width - 220, Height - 68),
                            new PointF(Width - 130, Height - 45), new PointF(Width, Height - 32));
-            wave.AddLine(Width, Height);
+            wave.AddLine(Width, Height - 32, Width, Height);
             wave.CloseFigure();
             using var brush = new SolidBrush(Color.FromArgb(82, 30, 194, 255));
             g.FillPath(brush, wave);
@@ -278,7 +278,7 @@ internal sealed class GradientHeader : Panel
         {
             wave.AddBezier(new PointF(Width - 210, Height), new PointF(Width - 125, Height - 75),
                            new PointF(Width - 68, Height - 62), new PointF(Width, Height - 73));
-            wave.AddLine(Width, Height);
+            wave.AddLine(Width, Height - 73, Width, Height);
             wave.CloseFigure();
             using var brush = new SolidBrush(Color.FromArgb(145, 34, 211, 128));
             g.FillPath(brush, wave);
