@@ -128,9 +128,9 @@ internal sealed class ModernButton : Control
 {
     private bool hovered;
     private bool pressed;
-    public Color Accent { get; set; } = Palette.Blue;
-    public bool Filled { get; set; }
-    public ButtonGlyph Glyph { get; set; }
+    public Color Accent = Palette.Blue;
+    public bool Filled;
+    public ButtonGlyph Glyph;
     public ModernButton(string text, ButtonGlyph glyph, bool filled, Color accent)
     {
         Text = text;
@@ -223,8 +223,8 @@ internal sealed class ModernButton : Control
 
 internal sealed class SurfaceCard : Panel
 {
-    public Color Fill { get; set; } = Color.White;
-    public Color Outline { get; set; } = Palette.Stroke;
+    public Color Fill = Color.White;
+    public Color Outline = Palette.Stroke;
     public SurfaceCard()
     {
         SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
@@ -267,8 +267,8 @@ internal sealed class GradientHeader : Panel
         g.SetClip(shape);
         using (var wave = new System.Drawing.Drawing2D.GraphicsPath())
         {
-            wave.AddBezier(Width - 340, Height, Width - 220, Height - 68,
-                           Width - 130, Height - 45, Width, Height - 32);
+            wave.AddBezier(new PointF(Width - 340, Height), new PointF(Width - 220, Height - 68),
+                           new PointF(Width - 130, Height - 45), new PointF(Width, Height - 32));
             wave.AddLine(Width, Height);
             wave.CloseFigure();
             using var brush = new SolidBrush(Color.FromArgb(82, 30, 194, 255));
@@ -276,8 +276,8 @@ internal sealed class GradientHeader : Panel
         }
         using (var wave = new System.Drawing.Drawing2D.GraphicsPath())
         {
-            wave.AddBezier(Width - 210, Height, Width - 125, Height - 75,
-                           Width - 68, Height - 62, Width, Height - 73);
+            wave.AddBezier(new PointF(Width - 210, Height), new PointF(Width - 125, Height - 75),
+                           new PointF(Width - 68, Height - 62), new PointF(Width, Height - 73));
             wave.AddLine(Width, Height);
             wave.CloseFigure();
             using var brush = new SolidBrush(Color.FromArgb(145, 34, 211, 128));
