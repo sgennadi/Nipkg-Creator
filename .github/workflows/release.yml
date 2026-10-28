@@ -1,4 +1,4 @@
-name: Build and publish v1.1.0
+name: Build and publish v1.1.1
 on:
   push:
     branches: [main]
@@ -38,18 +38,18 @@ jobs:
       - name: Upload CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NipkgCreator-v1.1.0-win-x64
+          name: NipkgCreator-v1.1.1-win-x64
           path: publish/NipkgCreator.exe
           if-no-files-found: error
-      - name: Publish stable v1.1.0 release
+      - name: Publish stable v1.1.1 release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = 'v1.1.0'
+          $tag = 'v1.1.1'
           gh release view $tag --repo "${{ github.repository }}" *> $null
           if ($LASTEXITCODE -eq 0) {
             throw "Release $tag already exists; refusing to overwrite it"
           }
-          gh release create $tag 'publish/NipkgCreator.exe' --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Nipkg Creator v1.1.0" --notes "New colorful WinForms interface, blue-and-green NI gear icon embedded in EXE, modern buttons, syntax highlighting, responsive paths and previews. Self-contained Windows x64." --latest
+          gh release create $tag 'publish/NipkgCreator.exe' --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Nipkg Creator v1.1.1" --notes "Fix clipped text and button labels across the GUI, preserve the branded icon and responsive paths; self-contained Windows x64." --latest
           if ($LASTEXITCODE -ne 0) { throw "Release publication failed" }
