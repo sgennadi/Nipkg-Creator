@@ -1,10 +1,11 @@
-name: Publish v1.0.0 Release
+name: Build and publish v1.0.1
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
       - '.github/workflows/release.yml'
+      - 'src/**'
 jobs:
   release:
     runs-on: windows-latest
@@ -29,10 +30,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = 'v1.0.0'
+          $tag = 'v1.0.1'
           gh release view $tag --repo "${{ github.repository }}" *> $null
           if ($LASTEXITCODE -eq 0) {
             throw "Release $tag already exists; refusing to overwrite it"
           }
-          gh release create $tag 'publish/NipkgCreator.exe' --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Nipkg Creator v1.0.0" --notes "Initial Windows x64 release. Standalone .NET 10 WinForms utility. Select feeds, preview generated configuration and save nipkg.ini in the package root." --latest
+          gh release create $tag 'publish/NipkgCreator.exe' --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Nipkg Creator v1.0.1" --notes "Windows x64 standalone GUI. Select any package root, _Src, or feeds; choose output folder; preview and generate nipkg.ini. Includes DPI layout fixes." --latest
           if ($LASTEXITCODE -ne 0) { throw "Release publication failed" }
